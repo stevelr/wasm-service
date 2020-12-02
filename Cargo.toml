@@ -1,0 +1,38 @@
+[package]
+name = "wasm-service"
+version = "0.2.0"
+authors = ["steve <dev@somecool.net>"]
+edition = "2018"
+license = "MIT/Apache-2.0"
+keywords = ["wasm","worker","http"]
+description = "Base library for serverless WASM on Cloudflare Workers"
+
+[features]
+# "std": use the std allocator; "alloc": you provide an allocator
+default=["alloc"]
+std = ["serde_json/std", "serde/std", "service-logging/std"]
+alloc = ["serde_json/alloc", "serde/alloc", "service-logging/alloc"]
+
+[dependencies]
+async-trait = "0.1"
+bytes = "0.5" 
+js-sys = "0.3"
+url = "2.2"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+wasm-bindgen-test = "0.3"
+
+# optional
+serde_json = { version="1.0", default-features=false, optional=true }
+serde = { version = "1.0", optional=true, features=["derive"] }
+service-logging = { version="0.2", path="../service-logging", optional=true, default-features=false }
+
+[dependencies.reqwest]
+version = "^0.10.9"
+features = [ "json" ]
+
+[dependencies.web-sys]
+version = "0.3.4"
+features = [
+  'console',
+]
