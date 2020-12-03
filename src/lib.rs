@@ -44,7 +44,7 @@ pub trait Handler<E> {
 
 /// Entrypoint for wasm-service. Converts parameters from javascript into [Request],
 /// invokes app-specific handler, and converts [`Response`] to javascript.
-/// Also sends logs to [`Logger`] and runs deferred tasks.
+/// Also sends logs to [`service_logging::Logger`] and runs deferred tasks.
 pub async fn service_request<E>(
     req: JsValue,
     logger: Box<dyn logging::Logger>,
