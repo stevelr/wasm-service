@@ -10,7 +10,7 @@ repository = "https://github.com/stevelr/wasm-service"
 homepage = "https://github.com/stevelr/wasm-service"
 documentation = "https://docs.rs/wasm-service"
 readme = "README.md"
-categories = ["web-programing::http-server","wasm","asynchronous"]
+categories = ["web-programming::http-server","wasm","asynchronous"]
 
 [features]
 # "std": use the std allocator; "alloc": you provide an allocator
