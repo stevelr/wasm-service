@@ -12,12 +12,12 @@ Base library for serverless WASM on Cloudflare Workers.
 To get started with a WASM service, use 
 
     wrangler generate -t rust PROJECT \
-	    https://github.com/stevelr/wasm-service-template
+	    https://github.com/stevelr/rustwasm-service-template
 
 where PROJECT is your project name.
 
 Follow instructions in 
-[wasm-service-template](https://github.com/stevelr/wasm-service-template/README.md)
+[rustwasm-service-template](https://github.com/stevelr/rustwasm-service-template/blob/main/README.md)
 
 for Cloudflare setup and (optional) Coralogix logging setup
 

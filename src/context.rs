@@ -4,9 +4,9 @@ use service_logging::{prelude::*, LogEntry, LogQueue};
 use std::panic::UnwindSafe;
 use url::Url;
 
-/// Context manages the information flow for an incoming http Request,
-/// the application handler, and the generated http Response. It holds a buffer
-/// for log messages, and a hook for deferred tasks to be processed after the Response is returned.
+/// Context manages the information flow for an incoming HTTP [crate::Request],
+/// the application handler, and the generated HTTP [crate::Response]. It holds a buffer
+/// for log messages, and a hook for deferred tasks to be processed after the [crate::Response] is returned.
 pub struct Context {
     request: Request,
     response: Response,
@@ -32,7 +32,7 @@ impl Context {
         &self.request
     }
 
-    /// Returns the request http method
+    /// Returns the request's HTTP method
     pub fn method(&self) -> Method {
         self.request.method()
     }
@@ -42,7 +42,7 @@ impl Context {
         &self.request.url()
     }
 
-    /// Returns the request body, or None if the body was empty
+    /// Returns the request body, or None if the body is empty
     pub fn body(&self) -> Option<&Vec<u8>> {
         self.request.body()
     }
@@ -54,17 +54,17 @@ impl Context {
 
     /// Adds a task to the deferred task queue. The task queue uses
     /// [event.waitUntil](https://www.w3.org/TR/service-workers/#extendableevent)
-    /// to extend the lifetime of the request event, and are run after the response
-    /// has been returned to the client. Deferred tasks are good for logging
-    /// and analytics.
+    /// to extend the lifetime of the request event, and runs tasks after the response
+    /// has been returned to the client.
+    /// Deferred tasks are often useful for logging and analytics.
     pub fn defer(&mut self, task: Box<dyn Runnable + UnwindSafe>) {
         self.deferred.push(task);
     }
 
-    /// Sets default content type for the Response.
-    /// If not overridden later by `header("Content-Type", ...)`
-    /// this value will be used. It may be useful to set this at the top of the handler/router,
-    /// to handle the most common response media type, and override it for special cases.
+    /// Sets the default header for the Response.
+    /// If not overridden later by `header("Content-Type", ...)` this value will be used.
+    /// It may be useful to set this at the beginning of the handler/router, for the most
+    /// common response media type, and override only for special cases.
     pub fn default_content_type<T: Into<String>>(&mut self, ct: T) {
         self.default_content_type = Some(ct.into())
     }

@@ -23,11 +23,15 @@ use logging::{log, prelude::*};
 pub(crate) use service_logging as logging;
 
 /// Runnable trait for deferred tasks
+/// Deferred tasks are often useful for logging and analytics.
 #[async_trait(?Send)]
 pub trait Runnable {
-    /// Deferred tasks may not return values or errors. (they also shouldn't panic)
-    /// Log messages appended to the log queue will be sent to the logger
-    /// after all deferred tasks have run.
+    /// Execute a deferred task. The task may append
+    /// logs to `lq` using the [crate::log] macro. Logs generated
+    /// are sent to the log service after all deferred tasks have run.
+    ///
+    /// Note that if there is a failure sending logs to the logging service,
+    /// those log messages (and the error from the send failure) will be unreported.
     async fn run(&self, lq: Rc<Mutex<logging::LogQueue>>);
 }
 
