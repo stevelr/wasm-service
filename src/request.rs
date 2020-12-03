@@ -4,7 +4,6 @@ use url::Url;
 use wasm_bindgen::JsValue;
 
 /// Incoming HTTP request (to Worker).
-/// This is not for outgoing requests - for those, use reqwest library
 pub struct Request {
     method: Method,
     url: Url,
@@ -14,6 +13,7 @@ pub struct Request {
 
 impl Request {
     /// Creates Request object representing incoming HTTP request
+    /// Used internally and for testing
     pub(crate) fn new(
         method: Method,
         url: Url,
@@ -28,6 +28,7 @@ impl Request {
         }
     }
 
+    /// Creates Request from javascript object
     pub(crate) fn from_js(map: &js_sys::Map) -> Result<Self, JsValue> {
         Ok(Request::new(
             Method::from(
@@ -45,23 +46,23 @@ impl Request {
         ))
     }
 
-    /// Returns the method of the Request
+    /// Returns the HTTP method
     pub fn method(&self) -> Method {
         self.method
     }
 
-    /// Returns the url of the Request
+    /// Returns the parsed url
     pub fn url(&self) -> &Url {
         &self.url
     }
 
-    /// Returns the headers of the request
+    /// Returns the set of request headers
     pub fn headers(&self) -> &web_sys::Headers {
         &self.headers
     }
 
     /// Returns the value of the header, or None if the header is not set.
-    /// Header name search is case-insensitive
+    /// Header name search is case-insensitive.
     pub fn get_header(&self, name: &str) -> Option<String> {
         match self.headers.get(name) {
             Ok(v) => v,

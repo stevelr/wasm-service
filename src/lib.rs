@@ -27,7 +27,7 @@ pub(crate) use service_logging as logging;
 #[async_trait(?Send)]
 pub trait Runnable {
     /// Execute a deferred task. The task may append
-    /// logs to `lq` using the [crate::log] macro. Logs generated
+    /// logs to `lq` using the [`log`] macro. Logs generated
     /// are sent to the log service after all deferred tasks have run.
     ///
     /// Note that if there is a failure sending logs to the logging service,
@@ -42,9 +42,9 @@ pub trait Handler<E> {
     async fn handle(&self, ctx: &mut Context) -> Result<(), E>;
 }
 
-/// Entrypoint for wasm-service. Converts parameters from javascript,
-/// invokes app-specific handler, and converts response to javascript.
-/// Also sends logs to logger and runs deferred taskss
+/// Entrypoint for wasm-service. Converts parameters from javascript into [Request],
+/// invokes app-specific handler, and converts [`Response`] to javascript.
+/// Also sends logs to [`Logger`] and runs deferred tasks.
 pub async fn service_request<E>(
     req: JsValue,
     logger: Box<dyn logging::Logger>,
@@ -85,9 +85,9 @@ where
     Ok(response.into_js())
 }
 
-// Future task that will run deferred. Includes deferred logs plus user-defined tasks.
-// This function contains a rust async wrapped in a Javascript Promise that will be passed
-// to the event.waitUntil function, so it gets processed after response is returned.
+/// Future task that will run deferred. Includes deferred logs plus user-defined tasks.
+/// This function contains a rust async wrapped in a Javascript Promise that will be passed
+/// to the event.waitUntil function, so it gets processed after response is returned.
 fn deferred_promise(
     logs: Vec<logging::LogEntry>, // logs to send before deferred tasks are run
     tasks: Vec<Box<dyn Runnable + std::panic::UnwindSafe>>, // deferred tasks
@@ -107,7 +107,7 @@ fn deferred_promise(
     })
 }
 
-// Returns javascript value, or Err if undefined
+/// Returns javascript value, or Err if undefined
 fn check_defined(v: JsValue, msg: &str) -> Result<JsValue, JsValue> {
     if v.is_undefined() {
         return Err(JsValue::from_str(msg.into()));

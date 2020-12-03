@@ -24,7 +24,7 @@ for Cloudflare setup and (optional) Coralogix logging setup
 ## Dependencies
 
 This crate takes advantage of some recent updates in 
-the popular reqwest crate (v0.10.9)
+the popular [reqwest](https://crates.io/crates/reqwest) (v0.10.9+)
 that make it possible to do outgoing http requests 
 from a Cloudflare worker. It is now possible
 to write libraries using http clients that compile 

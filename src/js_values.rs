@@ -1,5 +1,5 @@
-// utilities for converting to/from JsValue
-// Specifically, for use in getting params from incoming Request
+/// utilities for converting to/from JsValue
+/// Specifically, for use in getting params from incoming Request
 use wasm_bindgen::JsValue;
 
 /// Retrieve a string value from map

@@ -2,7 +2,7 @@ use crate::Error;
 use serde::Serialize;
 use wasm_bindgen::JsValue;
 
-/// Response for replying to http requests.
+/// Worker response for HTTP requests.
 /// The Response is created/accessed from `ctx.response()` and has a builder-like api.
 pub struct Response {
     status: u16,
@@ -33,7 +33,7 @@ impl Response {
         self
     }
 
-    /// Sets response body to value serialized as json, and content-type to application/json
+    /// Sets response body to value serialized as json, and sets content-type to application/json
     pub fn json<T: Serialize>(&mut self, value: &T) -> Result<&mut Self, Error> {
         self.body = serde_json::to_vec(value)?;
         self.header("Content-Type", "application/json")?;

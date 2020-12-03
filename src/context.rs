@@ -4,9 +4,9 @@ use service_logging::{prelude::*, LogEntry, LogQueue};
 use std::panic::UnwindSafe;
 use url::Url;
 
-/// Context manages the information flow for an incoming HTTP [crate::Request],
-/// the application handler, and the generated HTTP [crate::Response]. It holds a buffer
-/// for log messages, and a hook for deferred tasks to be processed after the [crate::Response] is returned.
+/// Context manages the information flow for an incoming HTTP [`Request`],
+/// the application handler, and the generated HTTP [`Response`]. It holds a buffer
+/// for log messages, and a hook for deferred tasks to be processed after the [`Response`] is returned.
 pub struct Context {
     request: Request,
     response: Response,
