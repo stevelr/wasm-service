@@ -19,16 +19,8 @@ mod context;
 pub use context::Context;
 pub(crate) mod js_values;
 
-/// Re-import [crate:service-logging]
-pub mod logging {
-    #[cfg(target = "wasm32")]
-    pub use service_logging::ConsoleLogger;
-    pub use service_logging::{
-        log, send_logs, AppendsLog, CoralogixConfig, CoralogixLogger, LogEntry, LogLevel, LogQueue,
-        Logger, Severity,
-    };
-}
-use logging::{log, AppendsLog};
+use logging::{log, prelude::*};
+pub(crate) use service_logging as logging;
 
 /// Runnable trait for deferred tasks
 #[async_trait(?Send)]

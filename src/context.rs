@@ -1,8 +1,6 @@
 use crate::Runnable;
-use crate::{
-    logging::{self, AppendsLog},
-    Method, Request, Response,
-};
+use crate::{Method, Request, Response};
+use service_logging::{prelude::*, LogEntry, LogQueue};
 use std::panic::UnwindSafe;
 use url::Url;
 
@@ -12,7 +10,7 @@ use url::Url;
 pub struct Context {
     request: Request,
     response: Response,
-    log_queue: logging::LogQueue,
+    log_queue: LogQueue,
     deferred: Vec<Box<dyn Runnable + UnwindSafe>>,
     default_content_type: Option<String>,
 }
@@ -23,7 +21,7 @@ impl Context {
         Self {
             request,
             response: Response::default(),
-            log_queue: logging::LogQueue::default(),
+            log_queue: LogQueue::default(),
             deferred: Vec::new(),
             default_content_type: None,
         }
@@ -73,7 +71,7 @@ impl Context {
 
     /// Returns pending log messages, emptying internal queue.
     /// This is used for sending queued messages to an external log service
-    pub(crate) fn take_logs(&mut self) -> Vec<logging::LogEntry> {
+    pub(crate) fn take_logs(&mut self) -> Vec<LogEntry> {
         self.log_queue.take()
     }
 
@@ -90,7 +88,7 @@ impl Context {
 
 impl AppendsLog for Context {
     /// Adds log to deferred queue
-    fn log(&mut self, e: logging::LogEntry) {
+    fn log(&mut self, e: LogEntry) {
         self.log_queue.log(e);
     }
 }
