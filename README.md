@@ -1,4 +1,4 @@
-Base library for serverless WASM on Cloudflare Workers.
+Simplify implementation of serverless WASM on Cloudflare Workers
 
 ## Features
 
@@ -16,9 +16,7 @@ To get started with a WASM service, use
 
 where PROJECT is your project name.
 
-Follow instructions in 
-[rustwasm-service-template](https://github.com/stevelr/rustwasm-service-template/blob/master/README.md)
-
+Follow instructions in [rustwasm-service-template](https://github.com/stevelr/rustwasm-service-template/blob/master/README.md)
 for Cloudflare setup and (optional) Coralogix logging setup
 
 ## Dependencies
