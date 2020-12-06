@@ -1,6 +1,6 @@
 [package]
 name = "wasm-service"
-version = "0.2.6"
+version = "0.2.7"
 authors = ["stevelr <git@somecool.net>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -32,7 +32,7 @@ serde_json = { version="1.0", default-features=false, optional=true }
 serde = { version = "1.0", optional=true, features=["derive"] }
 
 [dependencies.service-logging]
-version = "0.2"
+version = "0.3"
 path = "../service-logging"
 optional = true
 default-features = false
