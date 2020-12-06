@@ -94,14 +94,19 @@ fn deferred_promise(
     logger: Box<dyn logging::Logger>, // user's selected logger
 ) -> js_sys::Promise {
     wasm_bindgen_futures::future_to_promise(async move {
-        let _ = logging::send_logs(logs, &logger).await;
+        if let Err(e) = logger.send("http", logs).await {
+            log_log_error(e);
+        }
         let lq = Rc::new(Mutex::new(logging::LogQueue::default()));
         for t in tasks.into_iter() {
             t.run(lq.clone()).await;
         }
         // if any logs were generated during processing of deferred tasks, send those
         let mut lock_queue = lq.lock().unwrap();
-        let _ = logging::send_logs(lock_queue.take(), &logger).await;
+        let logs = lock_queue.take();
+        if let Err(e) = logger.send("http", logs).await {
+            log_log_error(e);
+        }
         // all done, return nothing
         Ok(JsValue::undefined())
     })
@@ -113,4 +118,13 @@ fn check_defined(v: JsValue, msg: &str) -> Result<JsValue, JsValue> {
         return Err(JsValue::from_str(msg.into()));
     }
     Ok(v)
+}
+
+/// logging fallback: if we can't send to external logger,
+/// log to "console" so it can be seen in worker logs
+fn log_log_error(e: Box<dyn std::error::Error>) {
+    web_sys::console::log_1(&wasm_bindgen::JsValue::from_str(&format!(
+        "Error sending logs: {:?}",
+        e
+    )))
 }
