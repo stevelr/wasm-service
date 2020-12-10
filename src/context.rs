@@ -53,7 +53,7 @@ impl Context {
     }
 
     /// Adds a task to the deferred task queue. The task queue uses
-    /// [event.waitUntil](https://www.w3.org/TR/service-workers/#extendableevent)
+    /// [event.waitUntil](https://developers.cloudflare.com/workers/runtime-apis/fetch-event)
     /// to extend the lifetime of the request event, and runs tasks after the response
     /// has been returned to the client.
     /// Deferred tasks are often useful for logging and analytics.
@@ -63,7 +63,7 @@ impl Context {
 
     /// Sets the default header for the Response.
     /// If not overridden later by `header("Content-Type", ...)` this value will be used.
-    /// It may be useful to set this at the beginning of the handler/router, for the most
+    /// It may be useful to set this at the beginning of the [Handler](trait.Handler.html), for the most
     /// common response media type, and override only for special cases.
     pub fn default_content_type<T: Into<String>>(&mut self, ct: T) {
         self.default_content_type = Some(ct.into())

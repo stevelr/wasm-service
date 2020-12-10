@@ -24,6 +24,20 @@ pub(crate) use service_logging as logging;
 
 /// Runnable trait for deferred tasks
 /// Deferred tasks are often useful for logging and analytics.
+/// ```rust
+/// use std::{rc::Rc,sync::Mutex};;
+/// use async_trait::async_trait;
+/// use service_logging::{log,Severity,LogQueue,prelude::*};
+/// use wasm_service::Runnable;
+///
+/// struct Data { s: String }
+/// #[async_trait(?Send)]
+/// impl Runnable for Data {
+///     async fn run(&self, lq: Rc<Mutex<LogQueue>>) {
+///         log!(lq, Severity::Info, msg: format!("You ran it! {}", self.s ));
+///     }
+/// }
+/// ```
 #[async_trait(?Send)]
 pub trait Runnable {
     /// Execute a deferred task. The task may append
@@ -36,6 +50,34 @@ pub trait Runnable {
 }
 
 /// Trait that defines app/service's request handler and router
+/// See [rustwasm-service-template](https://github.com/stevelr/rustwasm-service-template/blob/master/src/lib.rs)
+///   for a more complete example
+///
+///```rust
+/// # use service_logging::{Severity,log,prelude::*};
+/// # use wasm_service::{Context,Handler,Error};
+/// # use async_trait::async_trait;
+/// struct MyHandler {}
+/// #[async_trait(?Send)]
+/// impl Handler<Error> for MyHandler {
+///     /// Process incoming Request
+///     async fn handle(&self, ctx: &mut Context) -> Result<(), Error> {
+///         // log all url hits
+///         log!(ctx, Severity::Verbose, method: ctx.method(), url: ctx.url());
+///         match (ctx.method(), ctx.url().path()) {
+///             (GET, "/hello") => {
+///                 ctx.response().content_type("text/plain")?.text("Hello world!");
+///             }
+///             _ => {
+///                 ctx.response().status(404).text("Not Found");
+///             }
+///         }
+///         Ok(())
+///     }
+/// }
+///```
+///
+///
 #[async_trait(?Send)]
 pub trait Handler<E> {
     /// Implementation of application request handler
@@ -43,8 +85,8 @@ pub trait Handler<E> {
 }
 
 /// Entrypoint for wasm-service. Converts parameters from javascript into [Request],
-/// invokes app-specific handler, and converts [`Response`] to javascript.
-/// Also sends logs to [`service_logging::Logger`] and runs deferred tasks.
+/// invokes app-specific [Handler](trait.Handler.html), and converts [`Response`] to javascript.
+/// Also sends logs to [Logger](https://docs.rs/service-logging/0.3/service_logging/trait.Logger.html) and runs deferred tasks.
 pub async fn service_request<E>(
     req: JsValue,
     logger: Box<dyn logging::Logger>,

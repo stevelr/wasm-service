@@ -16,8 +16,10 @@ To get started with a WASM service, use
 
 where PROJECT is your project name.
 
-Follow instructions in [rustwasm-service-template](https://github.com/stevelr/rustwasm-service-template/blob/master/README.md)
-for Cloudflare setup and (optional) Coralogix logging setup
+[rustwasm-service-template](https://github.com/stevelr/rustwasm-service-template/blob/master/README.md) 
+contains some relevant sample code for using this library, as well as
+instructions for setup of Cloudflare and (optionally) Coralogix logging
+service.
 
 ## Dependencies
 
