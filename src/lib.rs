@@ -158,7 +158,7 @@ pub async fn service_request(req: JsValue, config: ServiceConfig) -> Result<JsVa
     let js_event = js_sys::Object::from(check_defined(map.get(&"event".into()), "missing event")?);
     let wait_func = Function::from(
         Reflect::get(&js_event, &JsValue::from_str("waitUntil"))
-            .or_else(|_| Err("event without waitUntil"))?,
+            .map_err(|_| "event without waitUntil")?,
     );
     let mut ctx = Context::default();
     let mut handler_result = Ok(());
