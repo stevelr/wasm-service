@@ -8,4 +8,5 @@ config.toml
 src/config.rs
 tmp/
 env
+.idea
 
