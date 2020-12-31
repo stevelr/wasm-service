@@ -1,10 +1,9 @@
 #![deny(missing_docs)]
-// #![feature(async_closure)]
 //! Base support for wasm service using Confluence Workers
 //!
 use async_trait::async_trait;
 use js_sys::{Function, Reflect};
-use service_logging::{log, LogEntry, LogQueue, Logger, Severity};
+use service_logging::{LogEntry, LogQueue, Logger};
 use std::sync::Mutex;
 use wasm_bindgen::JsValue;
 
