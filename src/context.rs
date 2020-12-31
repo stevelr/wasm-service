@@ -1,52 +1,22 @@
+use crate::Response;
 use crate::Runnable;
-use crate::{Method, Request, Response};
-use service_logging::{prelude::*, LogEntry, LogQueue};
+use service_logging::{LogEntry, LogQueue};
 use std::panic::UnwindSafe;
-use url::Url;
 
 /// Context manages the information flow for an incoming HTTP [`Request`],
 /// the application handler, and the generated HTTP [`Response`]. It holds a buffer
 /// for log messages, and a hook for deferred tasks to be processed after the [`Response`] is returned.
+#[derive(Default)]
 pub struct Context {
-    request: Request,
     response: Response,
     log_queue: LogQueue,
     deferred: Vec<Box<dyn Runnable + UnwindSafe>>,
     default_content_type: Option<String>,
 }
 
+unsafe impl Send for Context {}
+
 impl Context {
-    /// Constructs a new Context with the received Request.
-    pub(crate) fn new(request: Request) -> Self {
-        Self {
-            request,
-            response: Response::default(),
-            log_queue: LogQueue::default(),
-            deferred: Vec::new(),
-            default_content_type: None,
-        }
-    }
-
-    /// Accesses the Request object
-    pub fn request(&self) -> &Request {
-        &self.request
-    }
-
-    /// Returns the request's HTTP method
-    pub fn method(&self) -> Method {
-        self.request.method()
-    }
-
-    /// Returns the parsed Url of the incoming request
-    pub fn url(&self) -> &Url {
-        &self.request.url()
-    }
-
-    /// Returns the request body, or None if the body is empty
-    pub fn body(&self) -> Option<&Vec<u8>> {
-        self.request.body()
-    }
-
     /// Creates response builder
     pub fn response(&mut self) -> &mut Response {
         &mut self.response
@@ -84,73 +54,9 @@ impl Context {
     pub(crate) fn take_response(&mut self) -> Response {
         std::mem::take(&mut self.response)
     }
-}
 
-impl AppendsLog for Context {
     /// Adds log to deferred queue
-    fn log(&mut self, e: LogEntry) {
+    pub fn log(&mut self, e: LogEntry) {
         self.log_queue.log(e);
-    }
-}
-
-mod test {
-    use crate::{Context, Method, Request};
-    use url::Url;
-    use wasm_bindgen_test::wasm_bindgen_test;
-
-    // internal helper function to create a dummy Request
-    fn make_req(url: &'static str) -> Request {
-        Request::new(
-            Method::GET,
-            Url::parse(url).expect("url"),
-            web_sys::Headers::new().unwrap(),
-            None,
-        )
-    }
-
-    #[wasm_bindgen_test]
-    fn response_defaults() {
-        let req = make_req("https://www.example.com");
-        let mut ctx = crate::Context::new(req);
-        assert_eq!(ctx.response().get_status(), 200);
-        assert_eq!(ctx.response().get_body().len(), 0);
-    }
-
-    #[wasm_bindgen_test]
-    fn response_text() {
-        let req = make_req("https://www.example.com");
-        let mut ctx = Context::new(req);
-        ctx.response().status(201).text("hello");
-
-        assert_eq!(ctx.response().get_status(), 201);
-        assert_eq!(&ctx.response().get_body(), &b"hello");
-    }
-
-    #[wasm_bindgen_test]
-    fn response_bin() {
-        let req = make_req("https://www.example.com");
-        let mut ctx = Context::new(req);
-        ctx.response().status(202).body(b"bytes");
-
-        assert_eq!(ctx.response().get_status(), 202);
-        assert_eq!(&ctx.response().get_body(), &b"bytes");
-    }
-
-    #[wasm_bindgen_test]
-    fn response_headers() {
-        let req = make_req("https://www.example.com");
-        let mut ctx = Context::new(req);
-        ctx.response()
-            .header("Content-Type", "application/json")
-            .expect("set-header");
-
-        let sv = ctx
-            .response
-            .get_headers()
-            .unwrap()
-            .get("Content-Type")
-            .expect("get header");
-        assert!(sv.is_some(), "is-defined content-type");
-        assert_eq!(sv.unwrap(), "application/json", "content-type value");
     }
 }

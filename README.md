@@ -1,15 +1,26 @@
-Simplify implementation of serverless WASM on Cloudflare Workers
+Lightweight library for building Rust-WASM services on Cloudflare Workers.
+
+
+The goal of this library is to make it easy to build fast and
+lightweight HTTP-based services in WASM, hosted on Cloudflare Workers. 
+To keep things fast and lightweight, there is a strong preference for
+significant new capabilities to added as compile-time features or separate
+libraries.
 
 ## Features
 
 - Fully async
-- Request/response bodies can be text, json(serialized), or binary
+- Request & response bodies can be text, json, or binary
 - Non-blocking structured logging
 - Deferred tasks that run after response is returned to client
 
+## Add-ons
+
+- CORS handling and OAuth2
+
 ## Getting started
 
-To get started with a WASM service, use 
+To start a new project,
 
     wrangler generate -t rust PROJECT \
 	    https://github.com/stevelr/rustwasm-service-template
@@ -17,17 +28,14 @@ To get started with a WASM service, use
 where PROJECT is your project name.
 
 [rustwasm-service-template](https://github.com/stevelr/rustwasm-service-template/blob/master/README.md) 
-contains some relevant sample code for using this library, as well as
-instructions for setup of Cloudflare and (optionally) Coralogix logging
+contains some relevant sample code, as well as
+instructions for setting up of Cloudflare and (optionally) Coralogix logging
 service.
 
-## Dependencies
+## Updates (v0.3)
 
-This crate takes advantage of some recent updates in 
-the popular [reqwest](https://crates.io/crates/reqwest) (v0.10.9+)
-that make it possible to do outgoing http requests 
-from a Cloudflare worker. It is now possible
-to write libraries using http clients that compile 
-for both wasm targets and other non-wasm targets such as 
-native windows/mac/linux, without any feature switches.
+* Changes to support add-ons. 
+See [CHANGELOG](./CHANGELOG.md) for recent changes including 
+breaking api changes to `Handler.handle` and `Runnable.run` functions.
+
 

@@ -1,20 +1,23 @@
-use crate::{js_values, Error, Method};
+use crate::js_values;
+use crate::{Error, Method};
 use serde::de::DeserializeOwned;
+use std::borrow::Cow;
 use url::Url;
 use wasm_bindgen::JsValue;
 
 /// Incoming HTTP request (to Worker).
+#[derive(Debug, Clone)]
 pub struct Request {
     method: Method,
     url: Url,
     headers: web_sys::Headers,
     body: Option<Vec<u8>>,
 }
+unsafe impl Sync for Request {}
 
 impl Request {
     /// Creates Request object representing incoming HTTP request
-    /// Used internally and for testing
-    pub(crate) fn new(
+    pub fn new(
         method: Method,
         url: Url,
         headers: web_sys::Headers,
@@ -72,10 +75,7 @@ impl Request {
 
     /// Returns true if the header is set. Name is case-insensitive.
     pub fn has_header(&self, name: &str) -> bool {
-        match self.headers.has(name) {
-            Ok(b) => b,
-            Err(_) => false,
-        }
+        self.headers.has(name).unwrap_or(false)
     }
 
     /// Returns request body as byte vector, or None if body is empty
@@ -91,4 +91,54 @@ impl Request {
             Err(Error::Other("body is empty".to_string()))
         }
     }
+
+    /// Returns the cookie string, if set
+    pub fn get_cookie_value(&self, cookie_name: &str) -> Option<String> {
+        self.get_header("cookie")
+            .map(|cookie| {
+                (&cookie)
+                    .split(';')
+                    // allow spaces around ';'
+                    .map(|s| s.trim())
+                    // if name=value, return value
+                    .find_map(|part| cookie_value(part, cookie_name))
+                    .map(|v| v.to_string())
+            })
+            .unwrap_or_default()
+    }
+
+    /// returns the query variable from the url, or None if not found
+    pub fn get_query_value<'req>(&'req self, key: &'_ str) -> Option<Cow<'req, str>> {
+        self.url()
+            .query_pairs()
+            .find(|(k, _)| k == key)
+            .map(|(_, v)| v)
+    }
+}
+
+// If 'part' is of the form 'name=value', return value
+fn cookie_value<'cookie>(part: &'cookie str, name: &str) -> Option<&'cookie str> {
+    if part.len() > name.len() {
+        let (left, right) = part.split_at(name.len());
+        if left == name && right.starts_with('=') {
+            return Some(&right[1..]);
+        }
+    }
+    None
+}
+
+#[test]
+// test cookie_value function. Additional tests of Request are in tests/request.rs
+fn test_cookie_value() {
+    // short value
+    assert_eq!(cookie_value("x=y", "x"), Some("y"));
+
+    // longer value
+    assert_eq!(cookie_value("foo=bar", "foo"), Some("bar"));
+
+    // missing value
+    assert_eq!(cookie_value("x=y", "z"), None);
+
+    // empty value
+    assert_eq!(cookie_value("foo=", "foo"), Some(""));
 }

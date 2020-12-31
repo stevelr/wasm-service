@@ -4,10 +4,12 @@ use wasm_bindgen::JsValue;
 
 /// Worker response for HTTP requests.
 /// The Response is created/accessed from `ctx.response()` and has a builder-like api.
+#[derive(Debug)]
 pub struct Response {
     status: u16,
     headers: Option<web_sys::Headers>,
     body: Vec<u8>,
+    unset: bool,
 }
 
 impl Default for Response {
@@ -16,6 +18,7 @@ impl Default for Response {
             status: 200,
             headers: None,
             body: Vec::new(),
+            unset: true,
         }
     }
 }
@@ -24,12 +27,14 @@ impl Response {
     /// Sets response status
     pub fn status(&mut self, status: u16) -> &mut Self {
         self.status = status;
+        self.unset = false;
         self
     }
 
     /// Sets response body to the binary data
     pub fn body(&mut self, bytes: &[u8]) -> &mut Self {
         self.body = Vec::from(bytes);
+        self.unset = false;
         self
     }
 
@@ -37,12 +42,14 @@ impl Response {
     pub fn json<T: Serialize>(&mut self, value: &T) -> Result<&mut Self, Error> {
         self.body = serde_json::to_vec(value)?;
         self.header("Content-Type", "application/json")?;
+        self.unset = false;
         Ok(self)
     }
 
     /// Sets response body to the text string, encoded as utf-8
     pub fn text<T: Into<String>>(&mut self, text: T) -> &mut Self {
         self.body = text.into().as_bytes().to_vec();
+        self.unset = false;
         self
     }
 
@@ -105,5 +112,14 @@ impl Response {
             );
         }
         JsValue::from(map)
+    }
+
+    /// True if the response has not been filled in (none of status(), text() or body() has been
+    /// called).
+    /// This could be used as a flag for chained handlers to determine whether a previous
+    /// handler has filled in the response yet.
+    /// Setting headers (including content_type or user_agent) does not mark this assigned.
+    pub fn is_unset(&self) -> bool {
+        self.unset
     }
 }

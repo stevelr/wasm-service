@@ -2,7 +2,7 @@ use std::fmt;
 use wasm_bindgen::JsValue;
 
 /// HTTP Method
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Method {
     /// HTTP GET method
     GET,
@@ -14,6 +14,8 @@ pub enum Method {
     DELETE,
     /// HTTP HEAD method
     HEAD,
+    /// HTTP OPTIONS method
+    OPTIONS,
 }
 
 impl Method {
@@ -25,6 +27,7 @@ impl Method {
             "PUT" | "put" => Method::PUT,
             "DELETE" | "delete" => Method::DELETE,
             "HEAD" | "head" => Method::HEAD,
+            "OPTIONS" | "options" => Method::OPTIONS,
             _ => return Err(JsValue::from_str("Unsupported http method")),
         })
     }
@@ -41,7 +44,29 @@ impl fmt::Display for Method {
                 Method::PUT => "PUT",
                 Method::DELETE => "DELETE",
                 Method::HEAD => "HEAD",
+                Method::OPTIONS => "OPTIONS",
             }
         )
     }
+}
+
+#[test]
+fn method_str() {
+    // to_string() and from()
+    assert_eq!(Method::from("GET").unwrap().to_string(), "GET");
+    assert_eq!(Method::from("POST").unwrap().to_string(), "POST");
+    assert_eq!(Method::from("PUT").unwrap().to_string(), "PUT");
+    assert_eq!(Method::from("DELETE").unwrap().to_string(), "DELETE");
+    assert_eq!(Method::from("HEAD").unwrap().to_string(), "HEAD");
+    assert_eq!(Method::from("OPTIONS").unwrap().to_string(), "OPTIONS");
+
+    // PartialEq
+    assert!(Method::from("GET").unwrap() == Method::GET);
+
+    // Debug
+    assert_eq!(format!("{:?}", Method::PUT), "PUT");
+
+    // parse error
+    // moved this to tests/method.rs because it depends on web_sys::JsValue
+    //assert!(Method::from("none").is_err());
 }

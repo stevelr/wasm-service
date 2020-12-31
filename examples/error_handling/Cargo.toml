@@ -1,0 +1,29 @@
+[package]
+name = "wasm-service-error-handling"
+version = "0.1.0"
+authors = ["<name@example.com>"]
+edition = "2018"
+description = "Sample error handling code"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = { version="0.2", features=["serde-serialize"] }
+wasm-bindgen-futures = "0.4"
+async-trait = "0.1"
+js-sys = "0.3"
+
+wasm-service = { path="../../../wasm-service", features=["alloc"] }
+service-logging = { version="0.4", path="../../../service-logging", features=["alloc"] }
+serde = { version="1.0", default-features=false, features=["alloc","derive"]}
+serde_json = {version = "1.0", default-features = false, features = ["alloc"]}
+wee_alloc = { version = "0.4" }
+web-sys = { version = "0.3", features=[ "Headers", "console" ] }
+
+[dev-dependencies]
+wasm-bindgen-test = "0.2"
+
+[profile.release]
+# Tell `rustc` to optimize for small code size.
+opt-level = "s"

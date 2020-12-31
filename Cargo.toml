@@ -1,6 +1,6 @@
 [package]
 name = "wasm-service"
-version = "0.2.7"
+version = "0.3.0"
 authors = ["stevelr <git@somecool.net>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -22,24 +22,23 @@ alloc = ["serde_json/alloc", "serde/alloc", "service-logging/alloc"]
 async-trait = "0.1"
 bytes = "0.5" 
 js-sys = "0.3"
+reqwest = { version="^0.10.9", features=["json"] }
 url = "2.2"
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
-wasm-bindgen-test = "0.3"
 
 # optional
 serde_json = { version="1.0", default-features=false, optional=true }
-serde = { version = "1.0", optional=true, features=["derive"] }
+serde = { version="1.0", optional=true, features=["derive"] }
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
 
 [dependencies.service-logging]
-version = "0.3"
+version = "0.4"
 path = "../service-logging"
 optional = true
 default-features = false
-
-[dependencies.reqwest]
-version = "^0.10.9"
-features = [ "json" ]
 
 [dependencies.web-sys]
 version = "0.3.4"
