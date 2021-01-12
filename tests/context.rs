@@ -22,7 +22,9 @@ fn response_text() {
 #[wasm_bindgen_test]
 fn response_bin() {
     let mut ctx = Context::default();
-    ctx.response().status(202).body(b"bytes");
+    ctx.response()
+        .status(202)
+        .body(b"bytes".to_owned().to_vec());
 
     assert_eq!(ctx.response().get_status(), 202);
     assert_eq!(&ctx.response().get_body(), &b"bytes");

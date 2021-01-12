@@ -1,4 +1,9 @@
-## 0.3
+## v0.4.0 2021-01-12
+
+- response.body takes Vec<u8> instead of &[u8] to avoid an extra copy
+- added impl Default for ServiceConfig
+
+## v0.3
 
 - __Breaking changes__ to support add-ons
   - for `run()`, if you did logging with `log!(lq,...`, this changes to

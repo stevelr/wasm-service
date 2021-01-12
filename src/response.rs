@@ -32,8 +32,8 @@ impl Response {
     }
 
     /// Sets response body to the binary data
-    pub fn body(&mut self, bytes: &[u8]) -> &mut Self {
-        self.body = Vec::from(bytes);
+    pub fn body(&mut self, bytes: Vec<u8>) -> &mut Self {
+        self.body = bytes;
         self.unset = false;
         self
     }

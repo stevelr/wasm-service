@@ -142,6 +142,16 @@ pub struct ServiceConfig {
     pub handlers: Vec<Box<dyn Handler>>,
 }
 
+impl Default for ServiceConfig {
+    /// Default construction of ServiceConfig does no logging and handles no requests.
+    fn default() -> ServiceConfig {
+        ServiceConfig {
+            logger: service_logging::silent_logger(),
+            handlers: Vec::new(),
+        }
+    }
+}
+
 struct DeferredData {
     tasks: Vec<Box<dyn Runnable + std::panic::UnwindSafe>>,
     logs: Vec<LogEntry>,
