@@ -3,7 +3,7 @@
 //!
 use async_trait::async_trait;
 use js_sys::{Function, Reflect};
-use service_logging::{LogEntry, LogQueue, Logger};
+use service_logging::{log, LogEntry, LogQueue, Logger, Severity};
 use std::sync::Mutex;
 use wasm_bindgen::JsValue;
 
@@ -14,14 +14,20 @@ pub use method::Method;
 mod request;
 pub use request::Request;
 mod response;
-pub use response::Response;
+pub use response::{Body, Response};
+mod media_type;
+pub use media_type::media_type;
 
 /// re-export url::Url
 pub use url::Url;
 
 mod context;
 pub use context::Context;
+mod assets;
+pub use assets::StaticAssetHandler;
+mod httpdate;
 pub(crate) mod js_values;
+pub use httpdate::HttpDate;
 
 /// Logging support for deferred tasks
 #[derive(Debug)]
@@ -140,6 +146,11 @@ pub struct ServiceConfig {
 
     /// Request handler
     pub handlers: Vec<Box<dyn Handler>>,
+
+    /// how to handle internal errors. This function should modify ctx.response() with results,
+    /// which, for example, could include rendering a page or sending a redirect.
+    /// The default implementation returns status 200 with a short text message.
+    pub internal_error_handler: fn(req: &Request, ctx: &mut Context),
 }
 
 impl Default for ServiceConfig {
@@ -148,6 +159,7 @@ impl Default for ServiceConfig {
         ServiceConfig {
             logger: service_logging::silent_logger(),
             handlers: Vec::new(),
+            internal_error_handler: default_internal_error_handler,
         }
     }
 }
@@ -173,15 +185,19 @@ pub async fn service_request(req: JsValue, config: ServiceConfig) -> Result<JsVa
     let mut ctx = Context::default();
     let mut handler_result = Ok(());
     for handler in config.handlers.iter() {
+        if ctx.is_internal_error().is_some() {
+            (config.internal_error_handler)(&req, &mut ctx);
+            break;
+        }
         handler_result = handler.handle(&req, &mut ctx).await;
         // if handler set response, or returned HandlerReturn (which is a response), stop iter
         if handler_result.is_err() || !ctx.response().is_unset() {
             break;
         }
     }
-    if let Err(hreturn) = handler_result {
+    if let Err(result) = handler_result {
         // Convert HandlerReturn to status/body
-        ctx.response().status(hreturn.status).text(hreturn.text);
+        ctx.response().status(result.status).text(result.text);
     } else {
         // if no handler set response (status or body), create fallback 404 response
         if ctx.response().is_unset() {
@@ -189,6 +205,8 @@ pub async fn service_request(req: JsValue, config: ServiceConfig) -> Result<JsVa
         }
     }
     let response = ctx.take_response();
+    log!(ctx, Severity::Verbose, _:"service",
+        method: req.method(), url: req.url(), status: response.get_status());
     // this should always return OK (event has waitUntil property) unless api is broken.
     let promise = deferred_promise(Box::new(DeferredData {
         tasks: ctx.take_tasks(),
@@ -199,6 +217,18 @@ pub async fn service_request(req: JsValue, config: ServiceConfig) -> Result<JsVa
     Ok(response.into_js())
 }
 
+/// Default implementation of internal error handler
+/// Sets status to 200 and returns a short error message
+fn default_internal_error_handler(req: &Request, ctx: &mut Context) {
+    let error = ctx.is_internal_error();
+    log!(ctx, Severity::Error, _:"InternalError", url: req.url(),
+        error: error.map(|e| e.to_string()).unwrap_or_else(|| String::from("none")));
+    ctx.response()
+        .status(200)
+        .content_type(mime::TEXT_PLAIN_UTF_8)
+        .unwrap()
+        .text("Sorry, an internal error has occurred. It has been logged.");
+}
 /// Future task that will run deferred. Includes deferred logs plus user-defined tasks.
 /// This function contains a rust async wrapped in a Javascript Promise that will be passed
 /// to the event.waitUntil function, so it gets processed after response is returned.
