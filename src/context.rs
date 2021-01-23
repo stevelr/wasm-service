@@ -12,6 +12,7 @@ pub struct Context {
     log_queue: LogQueue,
     deferred: Vec<Box<dyn Runnable + UnwindSafe>>,
     default_content_type: Option<String>,
+    internal_error: Option<Box<dyn std::error::Error>>,
 }
 
 unsafe impl Send for Context {}
@@ -58,5 +59,15 @@ impl Context {
     /// Adds log to deferred queue
     pub fn log(&mut self, e: LogEntry) {
         self.log_queue.log(e);
+    }
+
+    /// Sets the internal error flag, which causes wasm_service to invoke the internal_error_handler
+    pub fn raise_internal_error(&mut self, e: Box<dyn std::error::Error>) {
+        self.internal_error = Some(e);
+    }
+
+    /// Returns whether the internal error flag has been set
+    pub fn is_internal_error(&self) -> Option<&dyn std::error::Error> {
+        self.internal_error.as_deref()
     }
 }
