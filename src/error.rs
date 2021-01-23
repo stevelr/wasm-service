@@ -16,8 +16,20 @@ pub enum Error {
     /// Error in external http sub-request (via reqwest lib)
     Http(reqwest::Error),
 
+    /// Error deserializing asset index
+    DeserializeAssets(Box<bincode::ErrorKind>),
+
     /// Invalid header value (contains non-ascii characters)
     InvalidHeaderValue(String),
+
+    /// No static asset is available at this path
+    NoStaticAsset(String),
+
+    /// KV asset not found
+    KVKeyNotFound(String, u16),
+
+    /// Error received from Cloudflare API while performing KV request
+    KVApi(reqwest::Error),
 
     /// Catch-all
     Other(String),
