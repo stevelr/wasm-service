@@ -78,6 +78,11 @@ impl Request {
         self.headers.has(name).unwrap_or(false)
     }
 
+    /// Returns true if the body is empty
+    pub fn is_empty(&self) -> bool {
+        self.body.is_none() || self.body.as_ref().unwrap().is_empty()
+    }
+
     /// Returns request body as byte vector, or None if body is empty
     pub fn body(&self) -> Option<&Vec<u8>> {
         self.body.as_ref()
