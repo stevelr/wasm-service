@@ -34,9 +34,11 @@ pub use httpdate::HttpDate;
 #[derive(Debug)]
 pub struct RunContext {
     /// queue of deferred messages
-    //pub log_queue: Mutex<LogQueue>,
     pub log_queue: RefCell<LogQueue>,
 }
+
+// workers are single-threaded
+unsafe impl Sync for RunContext {}
 
 impl RunContext {
     /// log message (used by log! macro)

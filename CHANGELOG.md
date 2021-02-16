@@ -1,3 +1,8 @@
+## 0.5.1
+
+- fix: RunContext needs to be decelared Sync (even though Workers are
+  single-threaded)
+
 ## 0.5.0
 
 - feature: support for oauth - see wasm-service-oauth crate
