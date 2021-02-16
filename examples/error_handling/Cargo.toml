@@ -5,6 +5,9 @@ authors = ["<name@example.com>"]
 edition = "2018"
 description = "Sample error handling code"
 
+[features]
+default = ["wee_alloc"]
+
 [lib]
 crate-type = ["cdylib", "rlib"]
 
@@ -14,15 +17,15 @@ wasm-bindgen-futures = "0.4"
 async-trait = "0.1"
 js-sys = "0.3"
 
-wasm-service = { path="../../../wasm-service", features=["alloc"] }
+wasm-service = { version="0.5", path="../../../wasm-service", features=["alloc"] }
 service-logging = { version="0.4", path="../../../service-logging", features=["alloc"] }
 serde = { version="1.0", default-features=false, features=["alloc","derive"]}
 serde_json = {version = "1.0", default-features = false, features = ["alloc"]}
-wee_alloc = { version = "0.4" }
+wee_alloc = { version = "0.4", optional=true }
 web-sys = { version = "0.3", features=[ "Headers", "console" ] }
 
 [dev-dependencies]
-wasm-bindgen-test = "0.2"
+wasm-bindgen-test = "0.3"
 
 [profile.release]
 # Tell `rustc` to optimize for small code size.

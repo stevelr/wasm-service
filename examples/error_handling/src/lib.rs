@@ -7,12 +7,16 @@ use wasm_service::{Context, Handler, HandlerReturn, Request, ServiceConfig};
 /// Catch-all error handler that generates error page
 fn internal_error(e: impl std::error::Error) -> HandlerReturn {
     HandlerReturn {
-        status: 500,
+        status: 200,
         text: format!(
-            r#"<html><body>
+            r#"<!DOCTYPE html>
+            <html>
+            <head><title>Server error</title></head>
+            <body>
             <h1>Error</h1>
             <p>Internal error has occurred: {:?}</p>
-            </body></html>"#,
+            </body>
+            </html>"#,
             e
         ),
     }
@@ -49,6 +53,7 @@ pub async fn main_entry(req: JsValue) -> Result<JsValue, JsValue> {
         ServiceConfig {
             logger: service_logging::ConsoleLogger::init(),
             handlers: vec![Box::new(MyHandler {})],
+            ..Default::default()
         },
     )
     .await

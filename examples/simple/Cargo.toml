@@ -1,0 +1,54 @@
+[package]
+name = "wasm-service-example-simple"
+version = "0.2.5"
+authors = ["stevelr <git@somecool.net>"]
+edition = "2018"
+description = "Template for WASM service using Cloudflare Workers"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["wee_alloc"]
+
+[dependencies]
+cfg-if = "1.0"
+wasm-bindgen = { version="0.2", features=["serde-serialize"] }
+wasm-bindgen-futures = "0.4"
+async-trait = "0.1"
+js-sys = "0.3"
+reqwest = { version="0.11", features=["json"] }
+
+# custom allocator
+wasm-service = { version="0.5", path="../..", features=["alloc"] }
+service-logging = { version="0.4", path="../../../service-logging", features=["alloc"] }
+serde = { version="1.0", default-features=false, features=["alloc","derive"]}
+serde_json = {version = "1.0", default-features = false, features = ["alloc"]}
+
+# The `console_error_panic_hook` crate provides better debugging of panics by
+# logging them with `console.error`. This is great for development, but requires
+# all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
+# code size when deploying.
+#console_error_panic_hook = { version = "0.1.1", optional = true }
+
+# `wee_alloc` is a tiny allocator for wasm that is only ~1K in code size
+# compared to the default allocator's ~10K. It is slower than the default
+# allocator, however.
+wee_alloc = { version = "0.4", optional = true }
+
+[dependencies.web-sys]
+version = "0.3"
+features = [
+    'Event',
+    'console',
+]
+
+[build-dependencies]
+config_struct = { version = "0.5", features=["toml-parsing"] }
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
+
+[profile.release]
+# Tell `rustc` to optimize for small code size.
+opt-level = "s"
