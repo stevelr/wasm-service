@@ -4,7 +4,8 @@
 use async_trait::async_trait;
 use js_sys::{Function, Reflect};
 use service_logging::{log, LogEntry, LogQueue, Logger, Severity};
-use std::sync::Mutex;
+use std::cell::RefCell;
+use std::fmt;
 use wasm_bindgen::JsValue;
 
 mod error;
@@ -33,12 +34,15 @@ pub use httpdate::HttpDate;
 #[derive(Debug)]
 pub struct RunContext {
     /// queue of deferred messages
-    pub log_queue: Mutex<LogQueue>,
+    //pub log_queue: Mutex<LogQueue>,
+    pub log_queue: RefCell<LogQueue>,
 }
 
 impl RunContext {
     /// log message (used by log! macro)
     pub fn log(&self, entry: LogEntry) {
+        self.log_queue.borrow_mut().log(entry);
+        /*
         let mut guard = match self.log_queue.lock() {
             Ok(guard) => guard,
             Err(_poisoned) => {
@@ -48,6 +52,7 @@ impl RunContext {
             }
         };
         guard.log(entry);
+         */
     }
 }
 
@@ -85,6 +90,12 @@ pub struct HandlerReturn {
     pub status: u16,
     /// body text
     pub text: String,
+}
+
+impl fmt::Display for HandlerReturn {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({},{})", self.status, self.text)
+    }
 }
 
 /// Generate handler return "error"
@@ -147,10 +158,15 @@ pub struct ServiceConfig {
     /// Request handler
     pub handlers: Vec<Box<dyn Handler>>,
 
-    /// how to handle internal errors. This function should modify ctx.response() with results,
-    /// which, for example, could include rendering a page or sending a redirect.
-    /// The default implementation returns status 200 with a short text message.
+    /// how to handle internal errors. This function should modify ctx.response()
+    /// with results, which, for example, could include rendering a page or sending
+    /// a redirect. The default implementation returns status 200 with a short text message.
     pub internal_error_handler: fn(req: &Request, ctx: &mut Context),
+
+    /// how to handle Not Found (404) responses.  This function should modify ctx.response()
+    /// with results, which, for example, could include rendering a page or sending
+    /// a redirect. The default implementation returns status 404 with a short text message.
+    pub not_found_handler: fn(req: &Request, ctx: &mut Context),
 }
 
 impl Default for ServiceConfig {
@@ -160,6 +176,7 @@ impl Default for ServiceConfig {
             logger: service_logging::silent_logger(),
             handlers: Vec::new(),
             internal_error_handler: default_internal_error_handler,
+            not_found_handler: default_not_found_handler,
         }
     }
 }
@@ -174,22 +191,18 @@ struct DeferredData {
 /// invokes app-specific [Handler](trait.Handler.html), and converts [`Response`] to javascript.
 /// Also sends logs to [Logger](https://docs.rs/service-logging/0.3/service_logging/trait.Logger.html) and runs deferred tasks.
 pub async fn service_request(req: JsValue, config: ServiceConfig) -> Result<JsValue, JsValue> {
+    let mut is_err = false;
     let map = js_sys::Map::from(req);
     let req = Request::from_js(&map)?;
-    // From incoming request, extract 'event' object, and get ref to its 'waitUntil' function
-    let js_event = js_sys::Object::from(check_defined(map.get(&"event".into()), "missing event")?);
-    let wait_func = Function::from(
-        Reflect::get(&js_event, &JsValue::from_str("waitUntil"))
-            .map_err(|_| "event without waitUntil")?,
-    );
     let mut ctx = Context::default();
     let mut handler_result = Ok(());
     for handler in config.handlers.iter() {
+        handler_result = handler.handle(&req, &mut ctx).await;
         if ctx.is_internal_error().is_some() {
             (config.internal_error_handler)(&req, &mut ctx);
+            is_err = true;
             break;
         }
-        handler_result = handler.handle(&req, &mut ctx).await;
         // if handler set response, or returned HandlerReturn (which is a response), stop iter
         if handler_result.is_err() || !ctx.response().is_unset() {
             break;
@@ -198,22 +211,51 @@ pub async fn service_request(req: JsValue, config: ServiceConfig) -> Result<JsVa
     if let Err(result) = handler_result {
         // Convert HandlerReturn to status/body
         ctx.response().status(result.status).text(result.text);
-    } else {
-        // if no handler set response (status or body), create fallback 404 response
-        if ctx.response().is_unset() {
-            ctx.response().status(404).text("Not Found");
-        }
+    } else if ctx.response().is_unset() {
+        // If NO handler set a response, it's content not found
+        // the not-found handler might return a static page or redirect
+        (config.not_found_handler)(&req, &mut ctx);
     }
     let response = ctx.take_response();
-    log!(ctx, Severity::Verbose, _:"service",
-        method: req.method(), url: req.url(), status: response.get_status());
-    // this should always return OK (event has waitUntil property) unless api is broken.
-    let promise = deferred_promise(Box::new(DeferredData {
-        tasks: ctx.take_tasks(),
-        logs: ctx.take_logs(),
-        logger: config.logger,
-    }));
-    let _ = wait_func.call1(&js_event, &promise); // todo: handle result
+    if response.get_status() < 200 || response.get_status() > 307 {
+        is_err = true;
+    }
+    let severity = if response.get_status() == 404 {
+        Severity::Warning
+    } else if is_err {
+        Severity::Error
+    } else {
+        Severity::Info
+    };
+    log!(ctx, severity, _:"service", method: req.method(), url: req.url(), status: response.get_status());
+    if is_err {
+        // if any error occurred, send logs now; fast path (on success) defers logging
+        // also, if there was an error, don't execute deferred tasks
+        let _ = config
+            .logger
+            .send("http", ctx.take_logs())
+            .await
+            .map_err(|e| {
+                ctx.response()
+                    .header("X-service-log-err-ret", e.to_string())
+                    .unwrap()
+            });
+    } else {
+        // From incoming request, extract 'event' object, and get ref to its 'waitUntil' function
+        let js_event =
+            js_sys::Object::from(check_defined(map.get(&"event".into()), "missing event")?);
+        let wait_func = Function::from(
+            Reflect::get(&js_event, &JsValue::from_str("waitUntil"))
+                .map_err(|_| "event without waitUntil")?,
+        );
+        // this should always return OK (event has waitUntil property) unless api is broken.
+        let promise = deferred_promise(Box::new(DeferredData {
+            tasks: ctx.take_tasks(),
+            logs: ctx.take_logs(),
+            logger: config.logger,
+        }));
+        let _ = wait_func.call1(&js_event, &promise); // todo: handle result
+    }
     Ok(response.into_js())
 }
 
@@ -229,6 +271,18 @@ fn default_internal_error_handler(req: &Request, ctx: &mut Context) {
         .unwrap()
         .text("Sorry, an internal error has occurred. It has been logged.");
 }
+
+/// Default implementation of not-found handler.
+/// Sets status to 404 and returns a short message "Not Found"
+pub fn default_not_found_handler(req: &Request, ctx: &mut Context) {
+    log!(ctx, Severity::Info, _:"NotFound", url: req.url());
+    ctx.response()
+        .status(404)
+        .content_type(mime::TEXT_PLAIN_UTF_8)
+        .unwrap()
+        .text("Not Found");
+}
+
 /// Future task that will run deferred. Includes deferred logs plus user-defined tasks.
 /// This function contains a rust async wrapped in a Javascript Promise that will be passed
 /// to the event.waitUntil function, so it gets processed after response is returned.
@@ -239,14 +293,16 @@ fn deferred_promise(args: Box<DeferredData>) -> js_sys::Promise {
             log_log_error(e);
         }
         // run each deferred task
-        let log_queue = Mutex::new(LogQueue::default());
+        // let log_queue = Mutex::new(LogQueue::default());
+        let log_queue = RefCell::new(LogQueue::default());
         let run_ctx = RunContext { log_queue };
         for t in args.tasks.iter() {
             t.run(&run_ctx).await;
         }
+
         // if any logs were generated during processing of deferred tasks, send those
-        let mut lock_queue = run_ctx.log_queue.lock().unwrap();
-        if let Err(e) = args.logger.send("http", lock_queue.take()).await {
+        let logs = run_ctx.log_queue.borrow_mut().take();
+        if let Err(e) = args.logger.send("http", logs).await {
             log_log_error(e);
         }
         // all done, return nothing

@@ -26,9 +26,11 @@ pub enum Error {
     NoStaticAsset(String),
 
     /// KV asset not found
+    #[allow(clippy::upper_case_acronyms)]
     KVKeyNotFound(String, u16),
 
     /// Error received from Cloudflare API while performing KV request
+    #[allow(clippy::upper_case_acronyms)]
     KVApi(reqwest::Error),
 
     /// Catch-all

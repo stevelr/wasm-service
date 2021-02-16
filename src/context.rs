@@ -11,7 +11,6 @@ pub struct Context {
     response: Response,
     log_queue: LogQueue,
     deferred: Vec<Box<dyn Runnable + UnwindSafe>>,
-    default_content_type: Option<String>,
     internal_error: Option<Box<dyn std::error::Error>>,
 }
 
@@ -32,17 +31,9 @@ impl Context {
         self.deferred.push(task);
     }
 
-    /// Sets the default header for the Response.
-    /// If not overridden later by `header("Content-Type", ...)` this value will be used.
-    /// It may be useful to set this at the beginning of the [Handler](trait.Handler.html), for the most
-    /// common response media type, and override only for special cases.
-    pub fn default_content_type<T: Into<String>>(&mut self, ct: T) {
-        self.default_content_type = Some(ct.into())
-    }
-
     /// Returns pending log messages, emptying internal queue.
     /// This is used for sending queued messages to an external log service
-    pub(crate) fn take_logs(&mut self) -> Vec<LogEntry> {
+    pub fn take_logs(&mut self) -> Vec<LogEntry> {
         self.log_queue.take()
     }
 

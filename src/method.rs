@@ -3,6 +3,7 @@ use wasm_bindgen::JsValue;
 
 /// HTTP Method
 #[derive(Clone, Copy, PartialEq, Debug)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum Method {
     /// HTTP GET method
     GET,

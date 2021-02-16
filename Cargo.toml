@@ -1,6 +1,6 @@
 [package]
 name = "wasm-service"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["stevelr <git@somecool.net>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -20,9 +20,13 @@ alloc = ["serde_json/alloc", "serde/alloc", "service-logging/alloc"]
 
 [dependencies]
 async-trait = "0.1"
-bytes = "0.5" 
+bincode = "1.3"
+bytes = "1.0"
+chrono = "0.4"
 js-sys = "0.3"
-reqwest = { version="^0.10.9", features=["json"] }
+kv-assets = { version = "0.2", path="../kv-assets" }
+mime = "0.3"
+reqwest = { version="0.11", features=["json"] }
 url = "2.2"
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
@@ -30,9 +34,6 @@ wasm-bindgen-futures = "0.4"
 # optional
 serde_json = { version="1.0", default-features=false, optional=true }
 serde = { version="1.0", optional=true, features=["derive"] }
-
-[dev-dependencies]
-wasm-bindgen-test = "0.3"
 
 [dependencies.service-logging]
 version = "0.4"
@@ -45,3 +46,8 @@ version = "0.3.4"
 features = [
   'console',
 ]
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
+cfg-if = "1.0"
+

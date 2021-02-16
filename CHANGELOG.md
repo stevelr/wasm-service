@@ -1,3 +1,20 @@
+## 0.5.0
+
+- feature: support for oauth - see wasm-service-oauth crate
+- feature: static asset handler, for serving static files
+- feature: add media_type() for looking up media type (aka MIME) based on file extension.  
+- feature: added internal_error_handler in ServiceConfig.
+  If you don't want to write one, a default implementation is included in ServiceConfig::default()
+- added two example projects: simple/ and error_handling/
+- removed context.default_content_type
+- added Request.is_empty() to test whether POST/PUT body has zero bytes
+- made ctx.take_logs() public
+- removed Mutex for deferred task logging - not needed because
+  workers are single-threaded
+- response.body() takes Into(Body) so can take a wider range of parameters
+- additional dependencies: mime,bincode,chrono,kv_assets
+- upgrade dependencies: reqwest 0.11
+  
 ## v0.4.0 2021-01-12
 
 - response.body takes Vec<u8> instead of &[u8] to avoid an extra copy
