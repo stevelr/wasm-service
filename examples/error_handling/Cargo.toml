@@ -17,8 +17,8 @@ wasm-bindgen-futures = "0.4"
 async-trait = "0.1"
 js-sys = "0.3"
 
-wasm-service = { version="0.5", path="../../../wasm-service", features=["alloc"] }
-service-logging = { version="0.4", path="../../../service-logging", features=["alloc"] }
+wasm-service = { version="0.5", features=["alloc"] }
+service-logging = { version="0.4", features=["alloc"] }
 serde = { version="1.0", default-features=false, features=["alloc","derive"]}
 serde_json = {version = "1.0", default-features = false, features = ["alloc"]}
 wee_alloc = { version = "0.4", optional=true }

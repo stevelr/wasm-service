@@ -20,8 +20,8 @@ js-sys = "0.3"
 reqwest = { version="0.11", features=["json"] }
 
 # custom allocator
-wasm-service = { version="0.5", path="../..", features=["alloc"] }
-service-logging = { version="0.4", path="../../../service-logging", features=["alloc"] }
+wasm-service = { version="0.5", features=["alloc"] }
+service-logging = { version="0.4", features=["alloc"] }
 serde = { version="1.0", default-features=false, features=["alloc","derive"]}
 serde_json = {version = "1.0", default-features = false, features = ["alloc"]}
 
