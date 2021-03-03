@@ -11,12 +11,13 @@ libraries.
 
 - Fully async
 - Request & response bodies can be text, json, or binary
-- Non-blocking structured logging
+- Non-blocking structured logging via [`service-logging`](https://github.com/stevelr/service-logging)
 - Deferred tasks that run after response is returned to client
+- Static file handling
 
 ## Add-ons
 
-- CORS handling and OAuth2
+- CORS and OAuth via [`wasm-service-oauth`](https://github.com/stevelr/wasm-service-oauth)
 
 ## Getting started
 
@@ -32,10 +33,14 @@ contains some relevant sample code, as well as
 instructions for setting up of Cloudflare and (optionally) Coralogix logging
 service.
 
-## Updates (v0.3)
+## License
 
-* Changes to support add-ons. 
-See [CHANGELOG](./CHANGELOG.md) for recent changes including 
-breaking api changes to `Handler.handle` and `Runnable.run` functions.
+Licensed under either of
 
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
+## Updates
+
+See [CHANGELOG](./CHANGELOG.md) for recent changes
 
